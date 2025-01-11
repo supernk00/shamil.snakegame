@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Snake Game</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      background-color: #2e2e2e;
+      font-family: Arial, sans-serif;
+      flex-direction: column;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* Game Canvas Styling */
+    canvas {
+      border: 2px solid #fff;
+      background-color: #000;
+      position: relative;
+      z-index: 2;
+      box-shadow: 0 0 10px rgba(0, 255, 0, 0.8);
+    }
+
+    /* Score and Coins */
+    #score, #coins {
+      position: absolute;
+      font-size: 24px;
+      color: white;
+      z-index: 3;
+    }
+
+    #score {
+      top: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+    }
+
+    #coins {
+      bottom: 10px;
+      left: 10px;
+    }
+
+    /* Game Over and Restart */
+    #game-over {
+      font-size: 30px;
+      color: white;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      display: none;
+      z-index: 4;
+    }
+
+    #restart-btn {
+      margin-top: 20px;
+      padding: 10px 20px;
+      font-size: 16px;
+      background-color: #28a745;
+      color: white;
+      border: none;
+      cursor: pointer;
+      display: none;
+      z-index: 5;
+    }
+
+    #restart-btn:hover {
+      background-color: #218838;
+    }
+
+    /* Shop and Game Info */
+    #game-by, #contact-me {
+      position: absolute;
+      font-size: 16px;
+      color: white;
+      z-index: 3;
+    }
+
+    #game-by {
+      top: 10px;
+      left: 10px;
+    }
+
+    #contact-me {
+      top: 10px;
+      right: 10px;
+    }
+
+    /* Shop Layout */
+    #shop {
+      background-color: rgba(0, 0, 0, 0.7);
+      padding: 20px;
+      border-radius: 10px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      color: white;
+      z-index: 6;
+    }
+
+    #shop button {
+      background-color: #28a745;
+      margin: 10px;
+      padding: 10px 20px;
+      color: white;
+      border: none;
+      cursor: pointer;
+      font-size: 16px;
+    }
+
+    #shop button:hover {
+      background-color: #218838;
+    }
+
+    #skin-options {
+      display: flex;
+      flex-direction: column;
+      margin-top: 20px;
+    }
+
+    .skin-option {
+      margin: 5px;
+      padding: 10px;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      cursor: pointer;
+      font-size: 16px;
+    }
+
+    .skin-option:hover {
+      background-color: #0056b3;
+    }
+
+    /* Animated Background */
+    .animated-background {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(45deg, #ff5f6d, #ffc3a0);
+      background-size: 400% 400%;
+      animation: gradientAnimation 10s ease infinite;
+      z-index: -1;
+    }
+
+    @keyframes gradientAnimation {
+      0% {
+        background-position: 0% 50%;
+      }
+      50% {
+        background-position: 100% 50%;
+      }
+      100% {
+        background-position: 0% 50%;
+      }
+    }
+
+    /* Mobile Touch Controls */
+    .controls {
+      position: absolute;
+      bottom: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      justify-content: space-around;
+      width: 80%;
+      z-index: 3;
+    }
+
+    .control-btn {
+      width: 50px;
+      height: 50px;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      font-size: 20px;
+      cursor: pointer;
+      border-radius: 50%;
+      transition: transform 0.2s ease;
+    }
+
+    .control-btn:hover {
+      background-color: #0056b3;
+      transform: scale(1.2);
+    }
+  </style>
+</head>
+<body>
+  <div class="animated-background"></div>
+  
+  <!-- Game Info -->
+  <div id="game-by">Game by <span style="font-weight: bold;">Shamillnk</span></div>
+  <div id="contact-me">Contact me on <a href="https://www.instagram.com/shamillnk" target="_blank" style="color: white;">Instagram</a></div>
+  
+  <!-- Score and Coins -->
+  <div id="score">Score: 0</div>
+  <div id="coins">Coins: 0</div>
+
+  <!-- Canvas -->
+  <canvas id="gameCanvas" width="400" height="400"></canvas>
+  
+  <!-- Game Over -->
+  <div id="game-over">Game Over</div>
+
+  <!-- Restart Button -->
+  <button id="restart-btn">Restart Game</button>
+
+  <!-- Shop -->
+  <div id="shop" style="display: none;">
+    <h2>Shop</h2>
+    <p>Current Skin: <span id="current-skin">Default</span></p>
+    <p>Coins: <span id="current-coins">0</span></p>
+    <div id="skin-options">
+      <button class="skin-option" id="default-skin">Default Skin - 0 Coins</button>
+      <button class="skin-option" id="rainbow-skin">Rainbow Skin - 50 Coins</button>
+      <button class="skin-option" id="blue-skin">Blue Skin - 100 Coins</button>
+    </div>
+    <button id="close-shop">Close Shop</button>
+  </div>
+
+  <!-- Controls -->
+  <div class="controls">
+    <button class="control-btn" id="up">↑</button>
+    <button class="control-btn" id="left">←</button>
+    <button class="control-btn" id="right">→</button>
+    <button class="control-btn" id="down">↓</button>
+  </div>
+
+  <script>
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    const restartBtn = document.getElementById('restart-btn');
+    const gameOverText = document.getElementById('game-over');
+    const scoreDisplay = document.getElementById('score');
+    const coinsDisplay = document.getElementById('coins');
+    const shopBtn = document.getElementById('shop-btn');
+    const shop = document.getElementById('shop');
+    const closeShopBtn = document.getElementById('close-shop');
+    const defaultSkinBtn = document.getElementById('default-skin');
+    const rainbowSkinBtn = document.getElementById('rainbow-skin');
+    const blueSkinBtn = document.getElementById('blue-skin');
+    const currentSkinDisplay = document.getElementById('current-skin');
+    const currentCoinsDisplay = document.getElementById('current-coins');
+    
+    const gridSize = 20;
+    const tileCount = canvas.width / gridSize;
+
+    let snake, snakeDirection, food, score, coins, gameOver, speedInterval, snakeSkin;
+
+    let snakeSpeed = 100;
+
+    function initGame() {
+      snake = [{x: 9, y: 9}];
+      snakeDirection = 'RIGHT';
+      food = {x: 5, y: 5};
+      score = 0;
+      coins = 0;
+      gameOver = false;
+      snakeSkin = 'Default';
+
+      scoreDisplay.textContent = `Score: ${score}`;
+      coinsDisplay.textContent = `Coins: ${coins}`;
+      currentCoinsDisplay.textContent = coins;
+      restartBtn.style.display = 'none';
+      gameOverText.style.display = 'none';
+      speedInterval = snakeSpeed;
+      gameLoop();
+    }
+
+    function drawSnake() {
+      snake.forEach((segment, index) => {
+        ctx.fillStyle = index === 0 ? getSnakeColor() : 'lightgreen';
+        ctx.strokeStyle = 'darkgreen';
+        ctx.lineWidth = 1;
+        ctx.fillRect(segment.x * gridSize, segment.y * gridSize, gridSize, gridSize);
+        ctx.strokeRect(segment.x * gridSize, segment.y * gridSize, gridSize, gridSize);
+      });
+    }
+
+    function drawFood() {
+      ctx.fillStyle = 'red';
+      ctx.beginPath();
+      ctx.arc(food.x * gridSize + gridSize / 2, food.y * gridSize + gridSize / 2, gridSize / 2, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    function drawScore() {
+      scoreDisplay.textContent = `Score: ${score}`;
+    }
+
+    function drawCoins() {
+      coinsDisplay.textContent = `Coins: ${coins}`;
+    }
+
+    function moveSnake() {
+      let head = { ...snake[0] };
+
+      if (snakeDirection === 'LEFT') head.x--;
+      if (snakeDirection === 'RIGHT') head.x++;
+      if (snakeDirection === 'UP') head.y--;
+      if (snakeDirection === 'DOWN') head.y++;
+
+      snake.unshift(head);
+
+      if (head.x === food.x && head.y === food.y) {
+        score += 10;
+        coins += 5;  // Earn coins when food is eaten
+        food = getRandomFoodPosition();
+        if (score % 50 === 0) {
+          snakeSpeed = Math.max(50, snakeSpeed - 10);
+          canvas.style.backgroundColor = randomColor();
+        }
+      } else {
+        snake.pop();
+      }
+    }
+
+    function checkCollisions() {
+      const head = snake[0];
+      if (
+        head.x < 0 || head.x >= tileCount || 
+        head.y < 0 || head.y >= tileCount || 
+        snake.some((segment, index) => index !== 0 && segment.x === head.x && segment.y === head.y)
+      ) {
+        gameOver = true;
+      }
+    }
+
+    function getRandomFoodPosition() {
+      let position;
+      do {
+        position = {
+          x: Math.floor(Math.random() * tileCount),
+          y: Math.floor(Math.random() * tileCount)
+        };
+      } while (snake.some(segment => segment.x === position.x && segment.y === position.y));
+      return position;
+    }
+
+    function gameLoop() {
+      if (gameOver) {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = 'white';
+        ctx.font = '30px Arial';
+        ctx.fillText('Game Over', canvas.width / 2 - 85, canvas.height / 2);
+        restartBtn.style.display = 'inline-block';
+        gameOverText.style.display = 'inline-block';
+        return;
+      }
+
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      moveSnake();
+      checkCollisions();
+      drawSnake();
+      drawFood();
+      drawScore();
+      drawCoins();
+
+      setTimeout(gameLoop, snakeSpeed);
+    }
+
+    function getSnakeColor() {
+      if (snakeSkin === 'Rainbow') {
+        return 'hsl(' + (Math.random() * 360) + ', 100%, 50%)';  // Random rainbow color
+      }
+      if (snakeSkin === 'Blue') {
+        return 'blue';
+      }
+      return 'green';  // Default color
+    }
+
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'ArrowLeft' && snakeDirection !== 'RIGHT') snakeDirection = 'LEFT';
+      if (event.key === 'ArrowRight' && snakeDirection !== 'LEFT') snakeDirection = 'RIGHT';
+      if (event.key === 'ArrowUp' && snakeDirection !== 'DOWN') snakeDirection = 'UP';
+      if (event.key === 'ArrowDown' && snakeDirection !== 'UP') snakeDirection = 'DOWN';
+    });
+
+    // Touch events for mobile controls
+    let touchStartX = 0;
+    let touchStartY = 0;
+
+    canvas.addEventListener('touchstart', (event) => {
+      touchStartX = event.touches[0].clientX;
+      touchStartY = event.touches[0].clientY;
+    });
+
+    canvas.addEventListener('touchend', (event) => {
+      const touchEndX = event.changedTouches[0].clientX;
+      const touchEndY = event.changedTouches[0].clientY;
+
+      const deltaX = touchEndX - touchStartX;
+      const deltaY = touchEndY - touchStartY;
+
+      if (Math.abs(deltaX) > Math.abs(deltaY)) {
+        // Horizontal swipe
+        if (deltaX > 0 && snakeDirection !== 'LEFT') {
+          snakeDirection = 'RIGHT';
+        } else if (deltaX < 0 && snakeDirection !== 'RIGHT') {
+          snakeDirection = 'LEFT';
+        }
+      } else {
+        // Vertical swipe
+        if (deltaY > 0 && snakeDirection !== 'UP') {
+          snakeDirection = 'DOWN';
+        } else if (deltaY < 0 && snakeDirection !== 'DOWN') {
+          snakeDirection = 'UP';
+        }
+      }
+    });
+
+    // Shop functionality
+    closeShopBtn.addEventListener('click', () => {
+      shop.style.display = 'none';
+    });
+
+    defaultSkinBtn.addEventListener('click', () => {
+      if (coins >= 0) {
+        snakeSkin = 'Default';
+        currentSkinDisplay.textContent = snakeSkin;
+        coins -= 0;
+        currentCoinsDisplay.textContent = coins;
+      }
+    });
+
+    rainbowSkinBtn.addEventListener('click', () => {
+      if (coins >= 50) {
+        snakeSkin = 'Rainbow';
+        currentSkinDisplay.textContent = snakeSkin;
+        coins -= 50;
+        currentCoinsDisplay.textContent = coins;
+      }
+    });
+
+    blueSkinBtn.addEventListener('click', () => {
+      if (coins >= 100) {
+        snakeSkin = 'Blue';
+        currentSkinDisplay.textContent = snakeSkin;
+        coins -= 100;
+        currentCoinsDisplay.textContent = coins;
+      }
+    });
+
+    restartBtn.addEventListener('click', () => {
+      initGame();
+    });
+
+    initGame();
+  </script>
+</body>
+</html>
